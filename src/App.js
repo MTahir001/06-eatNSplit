@@ -21,21 +21,32 @@ const initialFriends = [
 ];
 export default function App() {
   const [showAddFriend, setShowAddFriend] = useState(false);
+  const [friends, setFriends] = useState(initialFriends);
+  const [selectedFriend, setSelectedFriend] = useState(null);
 
   const showFriendHandler = () => {
     setShowAddFriend(() => !showAddFriend);
   };
 
+  const addFriendHandler = (newFriend) => {
+    setFriends((friends) => [...friends, newFriend]);
+    setShowAddFriend(false);
+  };
+
+  const selectHandler = (friend) => {
+    setSelectedFriend(friend);
+  };
+
   return (
     <div className="app">
       <div className="sidebar">
-        <FriendsList />
-        {showAddFriend && <FormAddFriend />}
+        <FriendsList friends={friends} onSelection={selectHandler} />
+        {showAddFriend && <FormAddFriend onAddFriend={addFriendHandler} />}
         <Button onClick={showFriendHandler}>
           {showAddFriend ? "Close" : "Add Friend"}
         </Button>
       </div>
-      <FormSplitBill />
+      {selectedFriend && <FormSplitBill />}
     </div>
   );
 }
@@ -48,18 +59,17 @@ function Button({ children, onClick }) {
   );
 }
 
-function FriendsList() {
-  const friend = initialFriends;
+function FriendsList({ friends, onSelection }) {
   return (
     <ul>
-      {friend.map((friend) => (
-        <Friend friend={friend} key={friend.id} />
+      {friends.map((friend) => (
+        <Friend friend={friend} key={friend.id} onSelection={onSelection} />
       ))}
     </ul>
   );
 }
 
-function Friend({ friend }) {
+function Friend({ friend, onSelection }) {
   return (
     <li>
       <img src={friend.image} alt={friend.name} />
@@ -76,14 +86,16 @@ function Friend({ friend }) {
       )}
       {friend.balance === 0 && <p>You and {friend.name} are even</p>}
 
-      <button className="button">Select</button>
+      <button className="button" onClick={() => onSelection(friend)}>
+        Select
+      </button>
     </li>
   );
 }
 
-function FormAddFriend() {
+function FormAddFriend({ onAddFriend }) {
   const [name, setName] = useState("");
-  const [image, setImage] = useState("https://i.pravatar.cc/48");
+  const [image, setImage] = useState("https://i.pravatar.cc/48?u=");
 
   const id = crypto.randomUUID();
   const submitHandler = (e) => {
@@ -92,11 +104,12 @@ function FormAddFriend() {
     if (!name || !image) return;
     const newFriend = {
       name,
-      image: `${image}=?${id}`,
+      image: `${image}${id}`,
       id,
     };
-
     console.log(newFriend);
+
+    onAddFriend(newFriend);
 
     setImage("https://i.pravatar.cc/48");
     setName("");
